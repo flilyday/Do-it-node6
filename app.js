@@ -35,8 +35,8 @@ var database = require('./database/database');
 // 모듈로 분리한 라우팅 파일 불러오기
 var route_loader = require('./routes/route_loader');
 
- 
-
+var passport = require('passport');
+var flash = require('connect-flash');
 
 // 익스프레스 객체 생성
 var app = express();
@@ -71,6 +71,46 @@ app.use(expressSession({
 	resave:true,
 	saveUninitialized:true
 }));
+
+// Passport 초기화
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(flash());
+
+// Passport Strategy 설정
+var LocalStrategy = require('passport-local').Strategy;
+const { Strategy } = require('passport');
+
+passport.use('local-login', new Strategy({
+	usernameField : 'email',
+	passwordField : 'passowrd',
+	passReqToCallback : true
+}, function(req, email, password, done) {
+	console.log('passport의 local-login 호출됨 : ' + email + ', ' + passowrd);
+
+	var database = app.get('database');
+	database.UserModel.findOne({'email':email}, function(err, user){
+		if (err) {
+			console.log('에러 발생함');
+			return done(err);
+		}
+		if (!user) {
+			console.log('사용자 아이디가 일치하지 않습니다.');
+			return done(null, fasle, req.flash('loginMessage', '등록된 계정이 없습니다.'));
+		}
+
+		var authenticated = user.authenticate(password, user._doc.salt, user._doc.hashed_password);
+		if(!authenticated) {
+			console.log('비밀번호가 일치하지 않습니다.');
+			return done(null, false, req.flash('loginMessage', '비밀번호가 일치하지 않습니다.'));
+		}
+		console.log('아이디와 비밀번호가 일치합니다.');
+		return done(null, user);
+	})
+}
+)
+
+
 
  
 //라우팅 정보를 읽어들여 라우팅 설정
