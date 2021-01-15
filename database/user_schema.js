@@ -95,8 +95,8 @@ Schema.createSchema = function(mongoose) {
 	
 	   
 	// 스키마에 static 메소드 추가
-	UserSchema.static('findByEmail', function(id, callback) {
-		return this.find({id:id}, callback);
+	UserSchema.static('findByEmail', function(email, callback) {
+		return this.find({email:email}, callback);
 	});
 	
 	UserSchema.static('findAll', function(callback) {

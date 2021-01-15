@@ -156,12 +156,68 @@ passport.deserializeUser(function(user, done) {
 	done(null, user);
 });
 
-
  
 //라우팅 정보를 읽어들여 라우팅 설정
-route_loader.init(app, express.Router());
+var router = express.Router();
+route_loader.init(app, router);
+
+// 회원가입과 로그인 라우팅 함수
+router.route('/').get(function(req, res){
+	console.log('/ 패스로 요청됨');
+	
+	res.render('index.ejs');
+})
 
 
+router.route('/login').get(function(req, res){
+	console.log('/login 패스 GET 요청됨');
+
+	res.render('login.ejs', {message : req.flash('loginMessage')});
+})
+
+router.route('/login').post(passport.authenticate('local-login', {
+	successRedirect : '/profile',
+	failureRedirect : '/login',
+	failureFlash : true
+}));
+
+router.route('/signup').get(function(req, res){
+	console.log('/singup 패스로 GET 요청됨');
+
+	res.render('signup.ejs', {message : req.flash('signupMessage') });
+});
+
+router.route('/signup').post(passport.authenticate('local-signup', {
+	successRedirect : '/profile',
+	failureRedirect : '/signup',
+	failureFlash : true
+}));
+
+router.route('/profile').get(function(req, res){
+	console.log('/profile 패스로 GET 요청됨')
+	console.log('req.user 객체 정보')
+	console.dir(req.user);
+
+	if (!req.use) {
+		console.log('사용자 인증 안된 상태임');
+		res.redirect('/');
+	} else {
+		console.log('사용자 인증된 상태임');
+
+		if (Array.isArray(req.user)) {
+			res.render('profile.ejs', {user : req.user[0]._doc});
+		} else {
+			res.render('profile.ejs', {user : req.user});
+		}
+	}
+});
+
+router.route('/logout').get(function(req, res){
+	console.log('/logout 패스로 GET 요청됨');
+
+	req.logout();
+	res.redirect('/');
+})
 
 
 //===== 404 에러 페이지 처리 =====//
